@@ -26,13 +26,15 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request): JsonResponse
     {
-        // create product first
-        $product = $request->user()->products()->create(
-            $request->validated()
-        );
+        $validated = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        $product = $request->user()->products()->create($validated);
 
 
-        // generate SKU if not provided
         if (!$product->sku_code) {
             $product->update([
                 'sku_code' => 'PRD-' . str_pad($product->id, 6, '0', STR_PAD_LEFT),
@@ -62,9 +64,13 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, string $id): JsonResponse
     {
         $product = request()->user()->products()->findOrFail($id);
+        $validated = $request->validated();
 
+        if ($request->hasFile('image')) {
+            $validated['image'] = $request->file('image')->store('products', 'public');
+        }
 
-        $product->update($request->validated());
+        $product->update($validated);
 
         return response()->json(
             $product->load('category')

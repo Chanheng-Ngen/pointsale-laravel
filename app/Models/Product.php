@@ -16,9 +16,12 @@ class Product extends Model
         'min_stock',
         'max_stock',
         'last_restocked',
+        'image',
     ];
 
-    protected $appends = ['status'];
+    protected $hidden = ['image'];
+
+    protected $appends = ['status', 'image_url'];
 
     public function getStatusAttribute(): string
     {
@@ -31,6 +34,11 @@ class Product extends Model
         }
 
         return 'in_stock';
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image ? asset('storage/' . $this->image) : null;
     }
 
     protected $casts = [
