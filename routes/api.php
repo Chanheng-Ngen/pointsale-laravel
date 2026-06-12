@@ -53,4 +53,7 @@ Route::put('orders/{order}/status', [OrderController::class, 'updateStatus']);
 Route::get('transactions/stats', [TransactionController::class, 'stats']);
 Route::apiResource('transactions', TransactionController::class);
 
-Route::get('analytics', [AnalyticsController::class, 'index']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('analytics', [AnalyticsController::class, 'index']);
+    Route::get('dashboard/stats', [AnalyticsController::class, 'dashboard']);
+});

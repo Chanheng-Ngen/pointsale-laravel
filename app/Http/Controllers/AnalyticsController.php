@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Transaction;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -22,6 +23,37 @@ class AnalyticsController extends Controller
             'sales_trends' => $this->getSalesTrends($startDate, $period),
             'category_sales' => $this->getCategorySales($startDate),
             'top_products' => $this->getTopProducts($startDate),
+        ]);
+    }
+
+    public function dashboard()
+    {
+        $today = Carbon::today();
+        $thisWeek = Carbon::now()->startOfWeek();
+
+        $todaySales = Transaction::where('type', 'sale')
+            ->whereDate('created_at', $today)
+            ->sum('amount');
+
+        $todayTransactions = Transaction::where('type', 'sale')
+            ->whereDate('created_at', $today)
+            ->count();
+
+        $totalProducts = Product::count();
+        $lowStockItems = Product::where('quantity', '<', 10)->count();
+        $pendingOrders = Order::where('status', 'pending')->count();
+        
+        $thisWeekSales = Transaction::where('type', 'sale')
+            ->where('created_at', '>=', $thisWeek)
+            ->sum('amount');
+
+        return response()->json([
+            'today_sales' => (float)$todaySales,
+            'today_transactions' => $todayTransactions,
+            'total_products' => $totalProducts,
+            'low_stock_items' => $lowStockItems,
+            'pending_orders' => $pendingOrders,
+            'this_week_sales' => (float)$thisWeekSales,
         ]);
     }
 

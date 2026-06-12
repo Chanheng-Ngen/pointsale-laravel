@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -26,10 +27,15 @@ class ProductController extends Controller
 
     public function store(StoreProductRequest $request): JsonResponse
     {
+        $data = $request->validated();
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products', 'public');
+            $data['image'] = $path;
+        }
+
         // create product first
-        $product = $request->user()->products()->create(
-            $request->validated()
-        );
+        $product = $request->user()->products()->create($data);
 
 
         // generate SKU if not provided
@@ -63,8 +69,18 @@ class ProductController extends Controller
     {
         $product = request()->user()->products()->findOrFail($id);
 
+        $data = $request->validated();
 
-        $product->update($request->validated());
+        if ($request->hasFile('image')) {
+            // delete old image
+            if ($product->image) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $path = $request->file('image')->store('products', 'public');
+            $data['image'] = $path;
+        }
+
+        $product->update($data);
 
         return response()->json(
             $product->load('category')
@@ -77,6 +93,12 @@ class ProductController extends Controller
     public function destroy(string $id)
     {
         $product = request()->user()->products()->findOrFail($id);
+        
+        // delete image
+        if ($product->image) {
+            Storage::disk('public')->delete($product->image);
+        }
+
         $product->delete();
         return response()->json(['message' => 'Product deleted'], 200);
     }
