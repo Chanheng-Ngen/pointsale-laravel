@@ -8,6 +8,7 @@ services:
     working_dir: /var/www
     volumes:
       - .:/var/www
+      - vendor_data:/var/www/vendor
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
     networks:
       - laravel_network
@@ -60,4 +61,7 @@ networks:
 
 volumes:
   mysql_data:
+    driver: local
+
+  vendor_data:
     driver: local
